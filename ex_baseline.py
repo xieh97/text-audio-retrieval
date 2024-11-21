@@ -99,7 +99,7 @@ def run():
 
     # Restore model from checkpoint
     ckpt = config.get("ckpt", None)
-    if ckpt is not None:
+    if ckpt is not None and os.path.exists(ckpt):
         model, optimizer, scaler = model_utils.restore(model, optimizer, scaler, ckpt, mode=config['mode'])
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), f"[Init] Restore model from checkpoint: {ckpt}")
 
