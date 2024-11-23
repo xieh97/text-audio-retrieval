@@ -116,14 +116,8 @@ def test(model, data_loader, criterion):
     }
 
 
-def restore(model, optimizer, scaler, ckpt, mode=None):
+def restore(model, ckpt):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if mode == "train":
-        model_state, optimizer_state, scaler_state = torch.load(ckpt, map_location=device)
-        model.load_state_dict(model_state)
-        optimizer.load_state_dict(optimizer_state)
-        scaler.load_state_dict(scaler_state)
-    else:
-        model_state = torch.load(ckpt, map_location=device)[0]
-        model.load_state_dict(model_state)
-    return model, optimizer, scaler
+    model_state = torch.load(ckpt, map_location=device)[0]
+    model.load_state_dict(model_state)
+    return model

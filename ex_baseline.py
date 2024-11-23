@@ -30,8 +30,8 @@ def get_config():
         "ckpt": None,
         "mode": None,
         "start_epoch": 0,
-        "max_epochs": 20,
-        "rampdown_stop": 15,
+        "max_epochs": 25,
+        "rampdown_stop": 20,
 
         "loss": {
             "tau": 0.05,
@@ -66,12 +66,18 @@ def run():
     # torch.backends.cudnn.deterministic = True
     # torch.backends.cudnn.benchmark = False
 
-    trial_dir = os.path.join(config['output_dir'], config['trial'], f'{random_seed}')
+    trial_dir = os.path.join(config['output_dir'], config['trial'])
     directories.make_if_not_exits(trial_dir)
 
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "[Init] Build model...")
     model = model_utils.init_model()
     print(model)
+
+    # Restore model from checkpoint
+    ckpt = config.get("ckpt", None)
+    if ckpt is not None and os.path.exists(ckpt):
+        model = model_utils.restore(model, ckpt)
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), f"[Init] Restore model from checkpoint: {ckpt}")
 
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "[Init] Load data...")
     train_ds = data_utils.get_data_set(config['train'], 'train')
@@ -96,12 +102,6 @@ def run():
 
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "[Init] Create gradient scaler...")
     scaler = torch.cuda.amp.GradScaler()
-
-    # Restore model from checkpoint
-    ckpt = config.get("ckpt", None)
-    if ckpt is not None and os.path.exists(ckpt):
-        model, optimizer, scaler = model_utils.restore(model, optimizer, scaler, ckpt, mode=config['mode'])
-        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), f"[Init] Restore model from checkpoint: {ckpt}")
 
     start_epoch = config['start_epoch']
     max_epoch = config['max_epochs']
