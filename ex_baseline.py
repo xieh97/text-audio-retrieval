@@ -5,6 +5,7 @@ import random
 from datetime import datetime
 
 import numpy
+import pandas
 import torch
 
 import data_loader
@@ -21,22 +22,22 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 def get_config():
     return {
-        "trial": '',
-        "output_dir": '',
+        "trial": "",
+        "output_dir": "",
 
         "random_seed": None,
-        "train": 'clothov2',
-        "test": 'clothov2',
+        "train": "clothov2",
+        "test": "clothov2",
         "ckpt": None,
-        "mode": None,
+
         "start_epoch": 0,
         "max_epochs": 25,
         "rampdown_stop": 20,
 
         "loss": {
             "tau": 0.05,
-            "target": '',
-            "target_func": '',
+            "target": "",
+            "target_func": "",
             "audio_modality": False,
             "text_modality": False,
 
@@ -109,6 +110,11 @@ def run():
     train_results, val_results, test_results = [], [], []
     val_losses, best_epoch = [], start_epoch
 
+    # Reload epoch results
+    report_fpath = os.path.join(trial_dir, "results.csv")
+    if os.path.exists(report_fpath):
+        val_losses = pandas.read_csv(report_fpath)['val_loss'].tolist()
+
     # Train model
     for epoch in range(start_epoch, max_epoch):
         train_state = model_utils.train(model, train_dl, objective, optimizer, scaler, epoch,
@@ -127,6 +133,10 @@ def run():
             best_epoch = epoch
             ckp_fpath = os.path.join(trial_dir, "best_loss_checkpoint.pt")
             torch.save((model.state_dict(), optimizer.state_dict(), scaler.state_dict()), ckp_fpath)
+
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), f'[Output] Save model checkpoint at Epoch {epoch}...')
+        ckp_fpath = os.path.join(trial_dir, "checkpoint.pt")
+        torch.save((model.state_dict(), optimizer.state_dict(), scaler.state_dict()), ckp_fpath)
 
         # Report epoch results
         report_fpath = os.path.join(trial_dir, "results.csv")

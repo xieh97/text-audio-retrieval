@@ -117,7 +117,9 @@ def test(model, data_loader, criterion):
 
 
 def restore(model, ckpt):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_state = torch.load(ckpt, map_location=device)[0]
-    model.load_state_dict(model_state)
+    with torch.no_grad():
+        model_state = torch.load(ckpt, map_location="cpu")
+        model.load_state_dict(model_state[0])
+    del model_state
+    torch.cuda.empty_cache()
     return model
